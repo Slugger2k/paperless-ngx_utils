@@ -139,6 +139,81 @@ Key environment variables:
 
 This repository also includes several utility scripts for managing your Paperless-ngx installation:
 
-- `paperless_remove_duplicated_corespondents.py/.sh`: Remove duplicate correspondents
-- `find_duplicate_ocr_content.py`: Find documents with duplicate OCR content
-- `delete_correspondets_without_doc.py`: Clean up correspondents without associated documents
+### find_duplicate_ocr_content.py
+
+This script identifies and removes duplicate paragraphs in the OCR content of documents in your Paperless-ngx system. It uses fuzzy matching to detect similar paragraphs that might be duplicated due to OCR errors.
+
+**Prerequisites:**
+- Create a `.api_token` file containing your Paperless-ngx API token
+- Install required Python packages: `requests`, `difflib`, `spellchecker`, `Levenshtein`
+
+**Usage:**
+```bash
+python find_duplicate_ocr_content.py [options]
+```
+
+**Options:**
+- `--threshold FLOAT`: Similarity threshold for detecting duplicates (default: 0.95)
+- `--levenshtein`: Use Levenshtein distance instead of difflib for similarity comparison
+- `--no-spellcheck`: Disable spellcheck correction before comparison
+- `--dry-run`: Simulate changes without modifying documents
+- `--show-duplicates`: Show the detected duplicate paragraphs (only with --dry-run)
+
+**Example:**
+```bash
+# Dry run to see what would be changed
+python find_duplicate_ocr_content.py --dry-run --show-duplicates
+
+# Actually remove duplicates with custom threshold
+python find_duplicate_ocr_content.py --threshold 0.90 --levenshtein
+```
+
+### paperless_remove_duplicated_corespondents.py
+
+This script identifies and merges similar correspondent names in your Paperless-ngx system. It uses an LLM (Ollama with llama3.3 model) to detect similar names that likely refer to the same entity, then merges them by reassigning documents and deleting the duplicates.
+
+**Prerequisites:**
+- Create a `.api_token` file containing your Paperless-ngx API token
+- Ensure Ollama is running with the llama3.3 model
+- Install required Python packages: `requests`
+
+**Usage:**
+```bash
+python paperless_remove_duplicated_corespondents.py [options]
+```
+
+**Options:**
+- `--dryrun`: Simulate changes without modifying correspondents
+- `--limit NUMBER`: Limit the number of correspondents to fetch (alphabetically sorted)
+- `--page NUMBER`: Specify which page of correspondents to fetch (works with --limit)
+
+**Example:**
+```bash
+# Dry run to see what would be changed
+python paperless_remove_duplicated_corespondents.py --dryrun
+
+# Process only the first 50 correspondents
+python paperless_remove_duplicated_corespondents.py --limit 50
+
+# Actually merge similar correspondents
+python paperless_remove_duplicated_corespondents.py
+```
+
+### delete_correspondets_without_doc.py
+
+This script identifies and removes correspondents that don't have any associated documents in your Paperless-ngx system. It helps keep your correspondent list clean and organized.
+
+**Prerequisites:**
+- Create a `.api_token` file containing your Paperless-ngx API token
+- Install required Python packages: `requests`
+
+**Usage:**
+```bash
+python delete_correspondets_without_doc.py
+```
+
+The script has no command-line options. It will:
+1. Fetch all correspondents from your Paperless-ngx system
+2. Identify those with zero associated documents
+3. Delete the unused correspondents
+4. Display a summary of the changes made
